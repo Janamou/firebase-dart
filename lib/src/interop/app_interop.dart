@@ -6,6 +6,7 @@ import 'package:js/js.dart';
 import 'auth_interop.dart';
 import 'database_interop.dart';
 import 'firebase_interop.dart';
+import 'messaging_interop.dart';
 import 'storage_interop.dart';
 
 @JS('App')
@@ -15,5 +16,6 @@ abstract class AppJsImpl {
   external AuthJsImpl auth();
   external DatabaseJsImpl database();
   external PromiseJsImpl delete();
+  external MessagingJsImpl messaging();
   external StorageJsImpl storage();
 }

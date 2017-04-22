@@ -5,6 +5,7 @@ import 'database.dart';
 import 'interop/app_interop.dart';
 import 'interop/firebase_interop.dart';
 import 'js.dart';
+import 'package:firebase/src/messaging.dart';
 import 'storage.dart';
 import 'utils.dart';
 
@@ -32,6 +33,9 @@ class App extends JsObjectWrapper<AppJsImpl> {
 
   /// Deletes the app and frees resources of all App's services.
   Future delete() => handleThenable(jsObject.delete());
+
+  /// Returns [Messaging] service.
+  Messaging messaging() => new Messaging.fromJsObject(jsObject.messaging());
 
   /// Returns [Storage] service.
   Storage storage() => new Storage.fromJsObject(jsObject.storage());

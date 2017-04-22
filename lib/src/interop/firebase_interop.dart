@@ -1,6 +1,7 @@
 @JS('firebase')
 library firebase.firebase_interop;
 
+import 'package:firebase/src/interop/messaging_interop.dart';
 import 'package:func/func.dart';
 import 'package:js/js.dart';
 
@@ -20,6 +21,7 @@ external AppJsImpl initializeApp(FirebaseOptions options, [String name]);
 external AppJsImpl app([String name]);
 external AuthJsImpl auth([AppJsImpl app]);
 external DatabaseJsImpl database([AppJsImpl app]);
+external MessagingJsImpl messaging([AppJsImpl app]);
 external StorageJsImpl storage([AppJsImpl app]);
 
 @JS('User')
@@ -115,10 +117,13 @@ class FirebaseOptions {
   external void set databaseURL(String s);
   external String get storageBucket;
   external void set storageBucket(String s);
+  external String get messagingSenderId;
+  external void set messagingSenderId(String s);
 
   external factory FirebaseOptions(
       {String apiKey,
       String authDomain,
       String databaseURL,
-      String storageBucket});
+      String storageBucket,
+      String messagingSenderId});
 }
