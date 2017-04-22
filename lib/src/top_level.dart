@@ -6,6 +6,7 @@ import 'package:firebase/src/messaging.dart';
 import 'storage.dart';
 
 export 'interop/firebase_interop.dart' show SDK_VERSION;
+export 'interop/worker_interop.dart' show workerSelf;
 
 /// A (read-only) array of all the initialized Apps.
 ///

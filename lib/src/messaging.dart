@@ -4,6 +4,7 @@ import 'package:firebase/src/js.dart';
 import 'package:firebase/src/utils.dart';
 import 'package:func/func.dart';
 import 'package:js/js.dart';
+import 'package:service_worker/window.dart' as sw;
 
 /// Firebase Messaging service interface.
 ///
@@ -69,6 +70,8 @@ class Messaging extends JsObjectWrapper<MessagingJsImpl> {
   dynamic setBackgroundMessageHandler(Func1 callback) =>
       jsObject.setBackgroundMessageHandler(allowInterop(callback));
 
-  // TODO implement
-  dynamic useServiceWorker(registration) => null;
+  dynamic useServiceWorker(sw.ServiceWorkerRegistration registration) =>
+      // TODO has to be registration.deletage
+      jsObject.useServiceWorker(registration);
+
 }
