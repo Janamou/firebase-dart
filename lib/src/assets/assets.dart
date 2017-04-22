@@ -9,6 +9,7 @@ String get apiKey => _config['API_KEY'];
 String get authDomain => _config['AUTH_DOMAIN'];
 String get databaseUrl => _config['DATABASE_URL'];
 String get storageBucket => _config['STORAGE_BUCKET'];
+String get messagingSenderId => _config['MESSAGING_SENDER_ID'];
 
 Map<String, String> get _config {
   if (_configVal != null) {
