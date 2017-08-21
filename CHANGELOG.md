@@ -1,3 +1,7 @@
+## 4.1.1
+
+* Added Phone Auth sample using Angular
+
 ## 4.1.0
 
 * Upgraded to Firebase JS API `4.2.0`.
