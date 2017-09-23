@@ -1,9 +1,10 @@
 @JS('firebase.messaging')
 library firebase.messaging_interop;
 
-import 'package:firebase/src/interop/firebase_interop.dart';
 import 'package:func/func.dart';
 import 'package:js/js.dart';
+
+import 'firebase_interop.dart';
 
 @JS('Messaging')
 abstract class MessagingJsImpl {

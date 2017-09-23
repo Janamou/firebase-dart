@@ -5,7 +5,7 @@ import 'database.dart';
 import 'interop/app_interop.dart';
 import 'interop/firebase_interop.dart';
 import 'js.dart';
-import 'package:firebase/src/messaging.dart';
+import 'messaging.dart';
 import 'storage.dart';
 import 'utils.dart';
 

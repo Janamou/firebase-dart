@@ -1,13 +1,13 @@
 @JS('firebase')
 library firebase.firebase_interop;
 
-import 'package:firebase/src/interop/messaging_interop.dart';
 import 'package:func/func.dart';
 import 'package:js/js.dart';
 
 import 'app_interop.dart';
 import 'auth_interop.dart';
 import 'database_interop.dart';
+import 'messaging_interop.dart';
 import 'storage_interop.dart';
 
 @JS()
