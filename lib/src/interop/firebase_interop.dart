@@ -10,57 +10,77 @@ import 'auth_interop.dart';
 import 'database_interop.dart';
 import 'storage_interop.dart';
 
+@JS()
 external List<AppJsImpl> get apps;
 
 /// The current SDK version.
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase#.SDK_VERSION>.
+@JS()
 external String get SDK_VERSION;
 
+@JS()
 external AppJsImpl initializeApp(FirebaseOptions options, [String name]);
+@JS()
 external AppJsImpl app([String name]);
+@JS()
 external AuthJsImpl auth([AppJsImpl app]);
+@JS()
 external DatabaseJsImpl database([AppJsImpl app]);
+@JS()
 external MessagingJsImpl messaging([AppJsImpl app]);
+@JS()
 external StorageJsImpl storage([AppJsImpl app]);
 
+/// https://firebase.google.com/docs/reference/js/firebase.User
 @JS('User')
 abstract class UserJsImpl extends UserInfoJsImpl {
   external bool get emailVerified;
-  external void set emailVerified(bool v);
   external bool get isAnonymous;
-  external void set isAnonymous(bool a);
   external List<UserInfoJsImpl> get providerData;
-  external void set providerData(List<UserInfoJsImpl> d);
   external String get refreshToken;
-  external void set refreshToken(String t);
   external PromiseJsImpl delete();
+  @Deprecated('Use `getIdToken` instead.')
   external PromiseJsImpl<String> getToken([bool opt_forceRefresh]);
-  external PromiseJsImpl<UserJsImpl> link(AuthCredential credential);
+  external PromiseJsImpl<String> getIdToken([bool opt_forceRefresh]);
+  external PromiseJsImpl<UserCredentialJsImpl>
+      linkAndRetrieveDataWithCredential(AuthCredential credential);
+  external PromiseJsImpl<UserJsImpl> linkWithCredential(
+      AuthCredential credential);
+  external PromiseJsImpl<ConfirmationResultJsImpl> linkWithPhoneNumber(
+      String phoneNumber, ApplicationVerifierJsImpl applicationVerifier);
   external PromiseJsImpl<UserCredentialJsImpl> linkWithPopup(
       AuthProviderJsImpl provider);
   external PromiseJsImpl linkWithRedirect(AuthProviderJsImpl provider);
-  external PromiseJsImpl reauthenticate(AuthCredential credential);
+  external PromiseJsImpl reauthenticateWithCredential(
+      AuthCredential credential);
+  external PromiseJsImpl reauthenticateAndRetrieveDataWithCredential(
+      AuthCredential credential);
+  external PromiseJsImpl<ConfirmationResultJsImpl>
+      reauthenticateWithPhoneNumber(
+          String phoneNumber, ApplicationVerifierJsImpl applicationVerifier);
+  external PromiseJsImpl<UserCredentialJsImpl> reauthenticateWithPopup(
+      AuthProviderJsImpl provider);
+  external PromiseJsImpl reauthenticateWithRedirect(
+      AuthProviderJsImpl provider);
   external PromiseJsImpl reload();
   external PromiseJsImpl sendEmailVerification();
   external PromiseJsImpl<UserJsImpl> unlink(String providerId);
   external PromiseJsImpl updateEmail(String newEmail);
   external PromiseJsImpl updatePassword(String newPassword);
+  external PromiseJsImpl updatePhoneNumber(AuthCredential phoneCredential);
   external PromiseJsImpl updateProfile(UserProfile profile);
+  external Object toJSON();
 }
 
 @JS('UserInfo')
 abstract class UserInfoJsImpl {
   external String get displayName;
-  external void set displayName(String s);
   external String get email;
-  external void set email(String s);
+  external String get phoneNumber;
   external String get photoURL;
-  external void set photoURL(String s);
   external String get providerId;
-  external void set providerId(String s);
   external String get uid;
-  external void set uid(String s);
 }
 
 @JS('Promise')

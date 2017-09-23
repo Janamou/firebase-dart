@@ -17,5 +17,5 @@ abstract class AppJsImpl {
   external DatabaseJsImpl database();
   external PromiseJsImpl delete();
   external MessagingJsImpl messaging();
-  external StorageJsImpl storage();
+  external StorageJsImpl storage([String url]);
 }

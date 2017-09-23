@@ -46,7 +46,8 @@ abstract class ReferenceJsImpl extends QueryJsImpl {
   external PromiseJsImpl setWithPriority(newVal, newPriority,
       [Func1 onComplete]);
   external PromiseJsImpl<TransactionJsImpl> transaction(Func1 transactionUpdate,
-      [Func3 onComplete, bool applyLocally]);
+      [Func3<Object, bool, DataSnapshotJsImpl, Null> onComplete,
+      bool applyLocally]);
   external PromiseJsImpl update(values, [Func1 onComplete]);
 }
 
@@ -60,15 +61,19 @@ abstract class QueryJsImpl {
   external QueryJsImpl limitToFirst(int limit);
   external QueryJsImpl limitToLast(int limit);
   external void off([String eventType, Func2Opt1 callback, context]);
-  external Func0 on(String eventType, Func2Opt1 callback,
+  external Func0 on(
+      String eventType, Func2Opt1<DataSnapshotJsImpl, String, Null> callback,
       [cancelCallbackOrContext, context]);
   external PromiseJsImpl<dynamic> once(String eventType,
-      [Func2Opt1 successCallback, failureCallbackOrContext, context]);
+      [Func2Opt1<DataSnapshotJsImpl, String, Null> successCallback,
+      failureCallbackOrContext,
+      context]);
   external QueryJsImpl orderByChild(String path);
   external QueryJsImpl orderByKey();
   external QueryJsImpl orderByPriority();
   external QueryJsImpl orderByValue();
   external QueryJsImpl startAt(value, [String key]);
+  external Object toJSON();
   @override
   external String toString();
 }
@@ -88,6 +93,7 @@ abstract class DataSnapshotJsImpl {
   external bool hasChildren();
   external int numChildren();
   external dynamic val();
+  external Object toJSON();
 }
 
 @JS('OnDisconnect')
@@ -101,7 +107,7 @@ abstract class OnDisconnectJsImpl {
 
 @JS('ThenableReference')
 abstract class ThenableReferenceJsImpl extends ReferenceJsImpl
-    implements ThenableJsImpl {
+    implements ThenableJsImpl<ReferenceJsImpl> {
   @override
   external ThenableJsImpl JS$catch([Func1 onReject]);
   @override
@@ -112,9 +118,7 @@ abstract class ThenableReferenceJsImpl extends ReferenceJsImpl
 @anonymous
 class TransactionJsImpl {
   external bool get committed;
-  external void set committed(bool c);
   external DataSnapshotJsImpl get snapshot;
-  external void set snapshot(DataSnapshotJsImpl s);
 
   external factory TransactionJsImpl(
       {bool committed, DataSnapshotJsImpl snapshot});

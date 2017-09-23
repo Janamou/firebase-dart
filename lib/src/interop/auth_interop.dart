@@ -10,25 +10,29 @@ import 'firebase_interop.dart';
 @JS('Auth')
 abstract class AuthJsImpl {
   external AppJsImpl get app;
-  external void set app(AppJsImpl a);
-  external UserJsImpl get currentUser;
-  external void set currentUser(UserJsImpl u);
   external PromiseJsImpl applyActionCode(String code);
   external PromiseJsImpl<ActionCodeInfo> checkActionCode(String code);
   external PromiseJsImpl confirmPasswordReset(String code, String newPassword);
   external PromiseJsImpl<UserJsImpl> createUserWithEmailAndPassword(
       String email, String password);
+  external UserJsImpl get currentUser;
   external PromiseJsImpl<List<String>> fetchProvidersForEmail(String email);
   external PromiseJsImpl<UserCredentialJsImpl> getRedirectResult();
   external Func0 onAuthStateChanged(nextOrObserver,
       [Func1 opt_error, Func0 opt_completed]);
+  external Func0 onIdTokenChanged(nextOrObserver,
+      [Func1 opt_error, Func0 opt_completed]);
   external PromiseJsImpl sendPasswordResetEmail(String email);
+  external PromiseJsImpl<UserCredentialJsImpl>
+      signInAndRetrieveDataWithCredential(AuthCredential credential);
   external PromiseJsImpl<UserJsImpl> signInAnonymously();
   external PromiseJsImpl<UserJsImpl> signInWithCredential(
       AuthCredential credential);
   external PromiseJsImpl<UserJsImpl> signInWithCustomToken(String token);
   external PromiseJsImpl<UserJsImpl> signInWithEmailAndPassword(
       String email, String password);
+  external PromiseJsImpl<ConfirmationResultJsImpl> signInWithPhoneNumber(
+      String phoneNumber, ApplicationVerifierJsImpl applicationVerifier);
   external PromiseJsImpl<UserCredentialJsImpl> signInWithPopup(
       AuthProviderJsImpl provider);
   external PromiseJsImpl signInWithRedirect(AuthProviderJsImpl provider);
@@ -43,9 +47,8 @@ abstract class AuthJsImpl {
 /// See: <https://firebase.google.com/docs/reference/js/firebase.auth.AuthCredential>.
 @JS()
 abstract class AuthCredential {
-  external String get provider;
-  external String get accessToken;
-  external String get secret;
+  /// The authentication provider ID for the credential.
+  external String get providerId;
 }
 
 @JS('AuthProvider')
@@ -97,6 +100,37 @@ class TwitterAuthProviderJsImpl extends AuthProviderJsImpl {
   external static AuthCredential credential(String token, String secret);
 }
 
+@JS('PhoneAuthProvider')
+class PhoneAuthProviderJsImpl extends AuthProviderJsImpl {
+  external factory PhoneAuthProviderJsImpl([AuthJsImpl auth]);
+  external static String get PROVIDER_ID;
+  external PromiseJsImpl<String> verifyPhoneNumber(
+      String phoneNumber, ApplicationVerifierJsImpl applicationVerifier);
+  // TODO official documentation says PromiseJsImpl<AuthCredential> return type
+  external static AuthCredential credential(
+      String verificationId, String verificationCode);
+}
+
+@JS('ApplicationVerifier')
+abstract class ApplicationVerifierJsImpl {
+  external String get type;
+  external PromiseJsImpl<String> verify();
+}
+
+@JS('RecaptchaVerifier')
+class RecaptchaVerifierJsImpl extends ApplicationVerifierJsImpl {
+  external factory RecaptchaVerifierJsImpl(container,
+      [Object parameters, AppJsImpl app]);
+  external clear();
+  external PromiseJsImpl<num> render();
+}
+
+@JS('ConfirmationResult')
+abstract class ConfirmationResultJsImpl {
+  external String get verificationId;
+  external PromiseJsImpl<UserCredentialJsImpl> confirm(String verificationCode);
+}
+
 /// A response from [Auth.checkActionCode].
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase.auth.ActionCodeInfo>.
@@ -122,14 +156,21 @@ class ActionCodeEmail {
   external String get email;
 }
 
+/// https://firebase.google.com/docs/reference/js/firebase.auth#.UserCredential
 @JS()
 @anonymous
 class UserCredentialJsImpl {
   external UserJsImpl get user;
-  external void set user(UserJsImpl u);
   external AuthCredential get credential;
-  external void set credential(AuthCredential c);
+  external String get operationType;
+  external AdditionalUserInfoJsImpl get additionalUserInfo;
+}
 
-  external factory UserCredentialJsImpl(
-      {UserJsImpl user, AuthCredential credential});
+/// https://firebase.google.com/docs/reference/js/firebase.auth#.AdditionalUserInfo
+@JS()
+@anonymous
+class AdditionalUserInfoJsImpl {
+  external String get providerId;
+  external Object get profile;
+  external String get username;
 }

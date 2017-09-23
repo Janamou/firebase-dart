@@ -49,6 +49,10 @@ void main() {
       test("Get storage", () {
         expect(app.storage(), isNotNull);
       });
+
+      test("Get storage with a bucket", () {
+        expect(app.storage("gs://$storageBucket"), isNotNull);
+      });
     });
 
     test("Can be created with name", () {
@@ -85,7 +89,7 @@ void main() {
 
   group("Firebase", () {
     test("SDK version", () {
-      expect(fb.SDK_VERSION, startsWith("3."));
+      expect(fb.SDK_VERSION, startsWith("4."));
     });
 
     group('ServerValue', () {

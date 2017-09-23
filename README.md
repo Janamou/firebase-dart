@@ -2,8 +2,9 @@
 
 [![Build Status](https://travis-ci.org/firebase/firebase-dart.svg?branch=master)](https://travis-ci.org/firebase/firebase-dart)
 
-This is a Dart wrapper library for the new 
-[Firebase](https://firebase.google.com). 
+This is a Dart wrapper library for the new [Firebase](https://firebase.google.com). 
+If you are using Dart to write Flutter apps, consider using the 
+[FlutterFire plugins](https://github.com/flutter/plugins/blob/master/FlutterFire.md) instead.
 
 You can find more information on how to use Firebase on the
 [Getting started](https://firebase.google.com/docs/web/setup) page.
@@ -27,7 +28,7 @@ Install the library from the pub or Github:
 
 ```yaml
 dependencies:
-  firebase: '^3.0.0'
+  firebase: '^4.0.0'
 ```
 
 ### Include Firebase source
@@ -36,7 +37,7 @@ You must include the original Firebase JavaScript source into your `.html` file
 to be able to use the library.
 
 ```html
-<script src="https://www.gstatic.com/firebasejs/3.7.8/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
 ```
 
 ### Use it
@@ -132,6 +133,7 @@ The following providers need to be enabled in Firebase console,
 
 * E-mail/password
 * Anonymous
+* Phone
 
 ### Database tests and example
 

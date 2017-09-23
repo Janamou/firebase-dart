@@ -1,3 +1,67 @@
+## 4.1.1
+
+* Improve the generic types in the interop library.
+
+## 4.1.0
+
+* Upgraded to Firebase JS API `4.2.0`.
+* Added `toJson` to `DataSnapshot` and `Query`. 
+* `Auth`:
+    * Implemented `PhoneAuthProvider` and `RecaptchaVerifier`.
+* `User`:
+    * Added `phoneNumber` property to the `UserInfo`.
+    * Added `linkWithPhoneNumber`, `updatePhoneNumber` and 
+      `reauthenticateWithPhoneNumber` methods.
+* New example demonstrating `PhoneAuthProvider` functionality in 
+  `example/auth_phone`.
+* Added more tests for V4 API.
+
+## 4.0.0
+
+* Upgraded to Firebase JS API `4.1.3`.
+
+* Breaking changes
+  * The value in `Auth.onAuthStateChanged` is now `User`. `AuthEvent` has been 
+    removed.
+
+* Removed deprecated APIs: 
+    * `User`
+        * `link` method in favor of `linkWithCredential`.
+        * `reauthenticate` method in favor of `reauthenticateWithCredential`.
+    * `AuthCredential`
+        * `provider` property in favor of `providerId`.
+
+* `User`: added `getIdToken`, `reauthenticateAndRetrieveDataWithCredential`,
+  `linkAndRetrieveDataWithCredential`, and `toJson()`.
+
+* `Auth`: added `signInAndRetrieveDataWithCredential` and `onIdTokenChanged`.
+
+## 3.2.1
+
+* Update minimum Dart SDK to `1.21.0` – required to use generic method syntax. 
+
+## 3.2.0
+
+* The `FirebaseJsNotLoadedException` is thrown when the firebase.js script is 
+  not included in the html file.
+  
+* Fix to support `dartdevc`.
+
+## 3.1.0
+
+* Updates from the Firebase `3.8.0` and `3.9.0` in `auth` library:
+    * `User`
+        * Deprecated `link` method in favor of `linkWithCredential`.
+        * Deprecated `reauthenticate` method in favor of
+          `reauthenticateWithCredential`.
+        * Added new `reauthenticateWithPopup` and `reauthenticateWithRedirect`
+          methods.
+    * `UserCredential`
+        * Added new `operationType` property.
+    * `AuthCredential`
+        * Deprecated `provider` property in favor of `providerId`.
+* The `app.storage()` has now an optional storage bucket parameter.
+
 ## 3.0.2
 
 * Throw `FirebaseClientException` if there are request failures in

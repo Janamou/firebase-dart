@@ -1,3 +1,5 @@
+import 'package:js/js_util.dart' as js;
+
 import 'app.dart';
 import 'auth.dart';
 import 'database.dart';
@@ -11,8 +13,7 @@ export 'interop/worker_interop.dart' show workerSelf;
 /// A (read-only) array of all the initialized Apps.
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase#.apps>.
-List<App> get apps =>
-    firebase.apps.map((jsApp) => new App.fromJsObject(jsApp)).toList();
+List<App> get apps => firebase.apps.map(App.get).toList();
 
 const String _defaultAppName = "[DEFAULT]";
 
@@ -29,17 +30,23 @@ App initializeApp(
     String name}) {
   name ??= _defaultAppName;
 
-  return new App.fromJsObject(firebase.initializeApp(
-      new firebase.FirebaseOptions(
-          apiKey: apiKey,
-          authDomain: authDomain,
-          databaseURL: databaseURL,
-          storageBucket: storageBucket,
-          messagingSenderId: messagingSenderId),
-      name));
-}
+  try {
+    return App.get(firebase.initializeApp(
+        new firebase.FirebaseOptions(
+            apiKey: apiKey,
+            authDomain: authDomain,
+            databaseURL: databaseURL,
+            storageBucket: storageBucket,
+            messagingSenderId: messagingSenderId),
+        name));
+  } catch (e) {
+    if (_firebaseNotLoaded(e)) {
+      throw new FirebaseJsNotLoadedException('firebase.js must be loaded.');
+    }
 
-App _app;
+    rethrow;
+  }
+}
 
 /// Retrieves an instance of an [App].
 ///
@@ -53,15 +60,8 @@ App _app;
 App app([String name]) {
   var jsObject = (name != null) ? firebase.app(name) : firebase.app();
 
-  if (_app != null) {
-    _app.jsObject = jsObject;
-  } else {
-    _app = new App.fromJsObject(jsObject);
-  }
-  return _app;
+  return App.get(jsObject);
 }
-
-Auth _auth;
 
 /// Gets the [Auth] object for the default App or a given App.
 ///
@@ -69,15 +69,8 @@ Auth _auth;
 Auth auth([App app]) {
   var jsObject = (app != null) ? firebase.auth(app.jsObject) : firebase.auth();
 
-  if (_auth != null) {
-    _auth.jsObject = jsObject;
-  } else {
-    _auth = new Auth.fromJsObject(jsObject);
-  }
-  return _auth;
+  return Auth.get(jsObject);
 }
-
-Database _database;
 
 /// Accesses the [Database] service for the default App or a given app.
 ///
@@ -89,29 +82,22 @@ Database database([App app]) {
   var jsObject =
       (app != null) ? firebase.database(app.jsObject) : firebase.database();
 
-  if (_database != null) {
-    _database.jsObject = jsObject;
-  } else {
-    _database = new Database.fromJsObject(jsObject);
-  }
-  return _database;
+  return Database.get(jsObject);
 }
 
-Messaging _messaging;
-
+/// Gets the Messaging service for the default app or a given app.
+///
+/// Calling firebase.messaging() in a service worker results in Firebase
+/// generating notifications if the push message payload has a notification
+/// parameter.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.messaging>.
 Messaging messaging([App app]) {
   var jsObject =
       (app != null) ? firebase.messaging(app.jsObject) : firebase.messaging();
 
-  if (_messaging != null) {
-    _messaging.jsObject = jsObject;
-  } else {
-    _messaging = new Messaging.fromJsObject(jsObject);
-  }
-  return _messaging;
+  return Messaging.get(jsObject);
 }
-
-Storage _storage;
 
 /// The namespace for all the [Storage] functionality.
 ///
@@ -123,10 +109,28 @@ Storage storage([App app]) {
   var jsObject =
       (app != null) ? firebase.storage(app.jsObject) : firebase.storage();
 
-  if (_storage != null) {
-    _storage.jsObject = jsObject;
-  } else {
-    _storage = new Storage.fromJsObject(jsObject);
+  return Storage.get(jsObject);
+}
+
+/// Exception thrown when the firebase.js is not loaded.
+class FirebaseJsNotLoadedException implements Exception {
+  final String message;
+  FirebaseJsNotLoadedException(this.message);
+
+  @override
+  String toString() => 'FirebaseJsNotLoadedException: $message';
+}
+
+bool _firebaseNotLoaded(error) {
+  if (error is NoSuchMethodError) {
+    return true;
   }
-  return _storage;
+
+  if (js.hasProperty(error, 'message')) {
+    var message = js.getProperty(error, 'message');
+    return message == 'firebase is not defined' ||
+        message == "Can't find variable: firebase";
+  }
+
+  return false;
 }

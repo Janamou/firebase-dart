@@ -1,5 +1,4 @@
-library firebase.example.auth;
-
+import 'dart:convert';
 import 'dart:html';
 
 import 'package:firebase/firebase.dart' as fb;
@@ -9,13 +8,17 @@ main() async {
   //Use for firebase package development only
   await config();
 
-  fb.initializeApp(
-      apiKey: apiKey,
-      authDomain: authDomain,
-      databaseURL: databaseUrl,
-      storageBucket: storageBucket);
+  try {
+    fb.initializeApp(
+        apiKey: apiKey,
+        authDomain: authDomain,
+        databaseURL: databaseUrl,
+        storageBucket: storageBucket);
 
-  new AuthApp();
+    new AuthApp();
+  } on fb.FirebaseJsNotLoadedException catch (e) {
+    print(e);
+  }
 }
 
 class AuthApp {
@@ -23,8 +26,9 @@ class AuthApp {
   final FormElement registerForm;
   final InputElement email, password;
   final AnchorElement logout;
-  final HeadingElement authInfo;
+  final TableElement authInfo;
   final ParagraphElement error;
+  final ButtonElement verifyEmail;
 
   AuthApp()
       : this.auth = fb.auth(),
@@ -33,7 +37,8 @@ class AuthApp {
         this.authInfo = querySelector("#auth_info"),
         this.error = querySelector("#register_form p"),
         this.logout = querySelector("#logout_btn"),
-        this.registerForm = querySelector("#register_form") {
+        this.registerForm = querySelector("#register_form"),
+        this.verifyEmail = querySelector('#verify_email') {
     logout.onClick.listen((e) {
       e.preventDefault();
       auth.signOut();
@@ -52,18 +57,35 @@ class AuthApp {
     }
 
     // When auth state changes
-    auth.onAuthStateChanged.listen((e) {
-      fb.User u = e.user;
-      _setLayout(u);
+    auth.onAuthStateChanged.listen((e) => _setLayout(e));
+
+    verifyEmail.onClick.listen((e) async {
+      verifyEmail.disabled = true;
+      verifyEmail.text = 'Sending verification email...';
+      await auth.currentUser.sendEmailVerification();
+      verifyEmail.text = 'Verification email sent!';
     });
   }
 
   _registerUser(String email, String password) async {
     if (email.isNotEmpty && password.isNotEmpty) {
+      var trySignin = false;
       try {
         await auth.createUserWithEmailAndPassword(email, password);
+      } on fb.FirebaseError catch (e) {
+        if (e.code == "auth/email-already-in-use") {
+          trySignin = true;
+        }
       } catch (e) {
         error.text = e.toString();
+      }
+
+      if (trySignin) {
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+        } catch (e) {
+          error.text = e.toString();
+        }
       }
     } else {
       error.text = "Please fill correct e-mail and password.";
@@ -78,11 +100,33 @@ class AuthApp {
       password.value = "";
       error.text = "";
       authInfo.style.display = "block";
-      authInfo.text = user.email;
+
+      var data = <String, dynamic>{
+        'email': user.email,
+        'emailVerified': user.emailVerified,
+        'isAnonymous': user.isAnonymous
+      };
+
+      data.forEach((k, v) {
+        if (v != null) {
+          var row = authInfo.addRow();
+
+          row.addCell()
+            ..text = k
+            ..classes.add('header');
+          row.addCell()..text = "$v";
+        }
+      });
+
+      print('User.toJson:');
+      print(const JsonEncoder.withIndent(' ').convert(user));
+
+      verifyEmail.style.display = user.emailVerified ? 'none' : 'block';
     } else {
       registerForm.style.display = "block";
       authInfo.style.display = "none";
       logout.style.display = "none";
+      verifyEmail.style.display = "none";
       authInfo.children.clear();
     }
   }

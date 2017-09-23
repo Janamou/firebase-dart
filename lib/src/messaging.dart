@@ -10,8 +10,18 @@ import 'package:service_worker/window.dart' as sw;
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase.messaging>.
 class Messaging extends JsObjectWrapper<MessagingJsImpl> {
+  static final _expando = new Expando<Messaging>();
+
   /// Creates a new Messaging from a [jsObject].
-  Messaging.fromJsObject(MessagingJsImpl jsObject)
+  static Messaging get(MessagingJsImpl jsObject) {
+    if (jsObject == null) {
+      return null;
+    }
+    return _expando[jsObject] ??= new Messaging._fromJsObject(jsObject);
+  }
+
+  /// Creates a new Messaging from a [jsObject].
+  Messaging._fromJsObject(MessagingJsImpl jsObject)
       : super.fromJsObject(jsObject);
 
   Future deleteToken(String token) =>
@@ -73,5 +83,4 @@ class Messaging extends JsObjectWrapper<MessagingJsImpl> {
   dynamic useServiceWorker(sw.ServiceWorkerRegistration registration) =>
       // TODO has to be registration.deletage
       jsObject.useServiceWorker(registration);
-
 }

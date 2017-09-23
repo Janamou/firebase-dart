@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:func/func.dart';
 import 'package:js/js.dart';
 
 import 'app.dart';
@@ -19,33 +20,21 @@ class UserInfo<T extends firebase_interop.UserInfoJsImpl>
     extends JsObjectWrapper<T> {
   /// User's display name.
   String get displayName => jsObject.displayName;
-  void set displayName(String s) {
-    jsObject.displayName = s;
-  }
 
   /// User's e-mail address.
   String get email => jsObject.email;
-  void set email(String s) {
-    jsObject.email = s;
-  }
+
+  /// The user's E.164 formatted phone number (if available).
+  String get phoneNumber => jsObject.phoneNumber;
 
   /// User's profile picture URL.
   String get photoURL => jsObject.photoURL;
-  void set photoURL(String s) {
-    jsObject.photoURL = s;
-  }
 
   /// User's authentication provider ID.
   String get providerId => jsObject.providerId;
-  void set providerId(String s) {
-    jsObject.providerId = s;
-  }
 
   /// User's unique ID.
   String get uid => jsObject.uid;
-  void set uid(String s) {
-    jsObject.uid = s;
-  }
 
   /// Creates a new UserInfo from a [jsObject].
   UserInfo.fromJsObject(T jsObject) : super.fromJsObject(jsObject);
@@ -55,6 +44,8 @@ class UserInfo<T extends firebase_interop.UserInfoJsImpl>
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase.User>.
 class User extends UserInfo<firebase_interop.UserJsImpl> {
+  static final _expando = new Expando<User>();
+
   /// If the user's email address has been already verified.
   bool get emailVerified => jsObject.emailVerified;
 
@@ -71,21 +62,65 @@ class User extends UserInfo<firebase_interop.UserJsImpl> {
   String get refreshToken => jsObject.refreshToken;
 
   /// Creates a new User from a [jsObject].
-  User.fromJsObject(firebase_interop.UserJsImpl jsObject)
+  ///
+  /// If an instance of [User] is already associated with [jsObject], it is
+  /// returned instead of creating a new instance.
+  ///
+  /// If [jsObject] is `null`, `null` is returned.
+  static User get(firebase_interop.UserJsImpl jsObject) {
+    if (jsObject == null) {
+      return null;
+    }
+    return _expando[jsObject] ??= new User._fromJsObject(jsObject);
+  }
+
+  User._fromJsObject(firebase_interop.UserJsImpl jsObject)
       : super.fromJsObject(jsObject);
 
   /// Deletes and signs out the user.
   Future delete() => handleThenable(jsObject.delete());
 
   /// Returns a JWT token used to identify the user to a Firebase service.
+  ///
   /// It forces refresh regardless of token expiration if [forceRefresh]
   /// parameter is [true].
+  ///
+  /// This method is **DEPRECATED**. Use [getIdToken] instead.
+  @Deprecated('Use `getIdToken` instead.')
   Future<String> getToken([bool forceRefresh = false]) =>
       handleThenable(jsObject.getToken(forceRefresh));
 
+  /// Returns a JWT token used to identify the user to a Firebase service.
+  ///
+  /// Returns the current token if it has not expired, otherwise this will
+  /// refresh the token and return a new one.
+  ///
+  /// It forces refresh regardless of token expiration if [forceRefresh]
+  /// parameter is [true].
+  Future<String> getIdToken([bool forceRefresh = false]) =>
+      handleThenable(jsObject.getIdToken(forceRefresh));
+
+  /// Links the user account with the given credentials, and returns any
+  /// available additional user information, such as user name.
+  Future<UserCredential> linkAndRetrieveDataWithCredential(
+          AuthCredential credential) =>
+      handleThenableWithMapper(
+          jsObject.linkAndRetrieveDataWithCredential(credential),
+          (u) => new UserCredential.fromJsObject(u));
+
   /// Links the user account with the given [credential] and returns the user.
-  Future<User> link(AuthCredential credential) => handleThenableWithMapper(
-      jsObject.link(credential), (u) => new User.fromJsObject(u));
+  Future<User> linkWithCredential(AuthCredential credential) =>
+      handleThenableWithMapper(
+          jsObject.linkWithCredential(credential), User.get);
+
+  /// Links the user account with the given [phoneNumber] in E.164 format
+  /// (e.g. +16505550101) and [applicationVerifier].
+  Future<ConfirmationResult> linkWithPhoneNumber(
+          String phoneNumber, ApplicationVerifier applicationVerifier) =>
+      handleThenableWithMapper(
+          jsObject.linkWithPhoneNumber(
+              phoneNumber, applicationVerifier.jsObject),
+          (c) => new ConfirmationResult.fromJsObject(c));
 
   /// Links the authenticated [provider] to the user account using
   /// a pop-up based OAuth flow.
@@ -99,11 +134,46 @@ class User extends UserInfo<firebase_interop.UserJsImpl> {
   Future linkWithRedirect(AuthProvider provider) =>
       handleThenable(jsObject.linkWithRedirect(provider.jsObject));
 
+  // FYI: as of 2017-07-03 – the return type of this guy is documented as
+  // Promise (Future)<nothing> - Filed a bug internally.
+  /// Re-authenticates a user using a fresh credential, and returns any
+  /// available additional user information, such as user name.
+  Future<UserCredential> reauthenticateAndRetrieveDataWithCredential(
+          AuthCredential credential) =>
+      handleThenableWithMapper(
+          jsObject.reauthenticateAndRetrieveDataWithCredential(credential),
+          (o) => new UserCredential.fromJsObject(o));
+
+  /// Re-authenticates a user using a fresh credential.
+  /// Use before operations such as [updatePassword] that require tokens
+  /// from recent sign-in attempts.
+  ///
+  /// The user's phone number is in E.164 format (e.g. +16505550101).
+  Future<ConfirmationResult> reauthenticateWithPhoneNumber(
+          String phoneNumber, ApplicationVerifier applicationVerifier) =>
+      handleThenableWithMapper(
+          jsObject.reauthenticateWithPhoneNumber(
+              phoneNumber, applicationVerifier.jsObject),
+          (c) => new ConfirmationResult.fromJsObject(c));
+
   /// Re-authenticates a user using a fresh [credential]. Should be used
   /// before operations such as [updatePassword()] that require tokens
   /// from recent sign in attempts.
-  Future reauthenticate(AuthCredential credential) =>
-      handleThenable(jsObject.reauthenticate(credential));
+  Future reauthenticateWithCredential(AuthCredential credential) =>
+      handleThenable(jsObject.reauthenticateWithCredential(credential));
+
+  /// Reauthenticates a user with the specified provider using
+  /// a pop-up based OAuth flow.
+  /// It returns the [UserCredential] information if reauthentication is successful.
+  Future<UserCredential> reauthenticateWithPopup(AuthProvider provider) =>
+      handleThenableWithMapper(
+          jsObject.reauthenticateWithPopup(provider.jsObject),
+          (u) => new UserCredential.fromJsObject(u));
+
+  /// Reauthenticates a user with the specified OAuth [provider] using
+  /// a full-page redirect flow.
+  Future reauthenticateWithRedirect(AuthProvider provider) =>
+      handleThenable(jsObject.reauthenticateWithRedirect(provider.jsObject));
 
   /// If signed in, it refreshes the current user.
   Future reload() => handleThenable(jsObject.reload());
@@ -113,9 +183,8 @@ class User extends UserInfo<firebase_interop.UserJsImpl> {
       handleThenable(jsObject.sendEmailVerification());
 
   /// Unlinks a provider with [providerId] from a user account.
-  Future<User> unlink(String providerId) => handleThenableWithMapper(
-      jsObject.unlink(providerId),
-      (firebase_interop.UserJsImpl u) => new User.fromJsObject(u));
+  Future<User> unlink(String providerId) =>
+      handleThenableWithMapper(jsObject.unlink(providerId), User.get);
 
   /// Updates the user's e-mail address to [newEmail].
   Future updateEmail(String newEmail) =>
@@ -127,6 +196,10 @@ class User extends UserInfo<firebase_interop.UserJsImpl> {
   Future updatePassword(String newPassword) =>
       handleThenable(jsObject.updatePassword(newPassword));
 
+  /// Updates the user's phone number.
+  Future updatePhoneNumber(AuthCredential phoneCredential) =>
+      handleThenable(jsObject.updatePhoneNumber(phoneCredential));
+
   /// Updates a user's [profile] data.
   /// UserProfile has a displayName and photoURL.
   ///
@@ -134,70 +207,104 @@ class User extends UserInfo<firebase_interop.UserJsImpl> {
   ///     await user.updateProfile(profile);
   Future updateProfile(firebase_interop.UserProfile profile) =>
       handleThenable(jsObject.updateProfile(profile));
+
+  /// Returns a JSON-serializable representation of this object.
+  Map<String, dynamic> toJson() => dartify(jsObject.toJSON());
+
+  @override
+  String toString() => 'User: $uid';
 }
 
 /// The Firebase Auth service class.
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase.auth.Auth>.
 class Auth extends JsObjectWrapper<AuthJsImpl> {
-  App _app;
+  static final _expando = new Expando<Auth>();
 
   /// App for this instance of auth service.
-  App get app {
-    if (_app != null) {
-      _app.jsObject = jsObject.app;
-    } else {
-      _app = new App.fromJsObject(jsObject.app);
-    }
-    return _app;
-  }
+  App get app => App.get(jsObject.app);
 
-  User _currentUser;
+  /// Currently signed-in [User].
+  User get currentUser => User.get(jsObject.currentUser);
 
-  /// Currently signed-in user.
-  User get currentUser {
-    if (jsObject.currentUser != null) {
-      if (_currentUser != null) {
-        _currentUser.jsObject = jsObject.currentUser;
-      } else {
-        _currentUser = new User.fromJsObject(jsObject.currentUser);
-      }
-    } else {
-      _currentUser = null;
-    }
-    return _currentUser;
-  }
+  Func0 _onAuthUnsubscribe;
+  StreamController<User> _changeController;
 
-  var _onAuthUnsubscribe;
-  StreamController<AuthEvent> _changeController;
-
-  /// Stream for an auth state changed event.
-  Stream<AuthEvent> get onAuthStateChanged {
+  /// Sends events when the users sign-in state changes.
+  ///
+  /// After 4.0.0, this is only triggered on sign-in or sign-out.
+  /// To keep the old behavior, see [onIdTokenChanged].
+  ///
+  /// If the value is `null`, there is no signed-in user.
+  Stream<User> get onAuthStateChanged {
     if (_changeController == null) {
       var nextWrapper = allowInterop((firebase_interop.UserJsImpl user) {
-        _changeController.add(
-            new AuthEvent((user != null) ? new User.fromJsObject(user) : null));
+        _changeController.add(User.get(user));
       });
 
       var errorWrapper = allowInterop((e) => _changeController.addError(e));
 
       void startListen() {
+        assert(_onAuthUnsubscribe == null);
         _onAuthUnsubscribe =
             jsObject.onAuthStateChanged(nextWrapper, errorWrapper);
       }
 
       void stopListen() {
         _onAuthUnsubscribe();
+        _onAuthUnsubscribe = null;
       }
 
-      _changeController = new StreamController<AuthEvent>.broadcast(
+      _changeController = new StreamController<User>.broadcast(
           onListen: startListen, onCancel: stopListen, sync: true);
     }
     return _changeController.stream;
   }
 
+  Func0 _onIdTokenChangedUnsubscribe;
+  StreamController<User> _idTokenChangedController;
+
+  /// Sends events for changes to the signed-in user's ID token,
+  /// which includes sign-in, sign-out, and token refresh events.
+  ///
+  /// This method has the same behavior as [onAuthStateChanged] had prior to 4.0.0.
+  ///
+  /// If the value is `null`, there is no signed-in user.
+  Stream<User> get onIdTokenChanged {
+    if (_idTokenChangedController == null) {
+      var nextWrapper = allowInterop((firebase_interop.UserJsImpl user) {
+        _idTokenChangedController.add(User.get(user));
+      });
+
+      var errorWrapper =
+          allowInterop((e) => _idTokenChangedController.addError(e));
+
+      void startListen() {
+        assert(_onIdTokenChangedUnsubscribe == null);
+        _onIdTokenChangedUnsubscribe =
+            jsObject.onIdTokenChanged(nextWrapper, errorWrapper);
+      }
+
+      void stopListen() {
+        _onIdTokenChangedUnsubscribe();
+        _onIdTokenChangedUnsubscribe = null;
+      }
+
+      _idTokenChangedController = new StreamController<User>.broadcast(
+          onListen: startListen, onCancel: stopListen, sync: true);
+    }
+    return _idTokenChangedController.stream;
+  }
+
   /// Creates a new Auth from a [jsObject].
-  Auth.fromJsObject(AuthJsImpl jsObject) : super.fromJsObject(jsObject);
+  static Auth get(AuthJsImpl jsObject) {
+    if (jsObject == null) {
+      return null;
+    }
+    return _expando[jsObject] ??= new Auth._fromJsObject(jsObject);
+  }
+
+  Auth._fromJsObject(AuthJsImpl jsObject) : super.fromJsObject(jsObject);
 
   /// Applies a verification [code] sent to the user by e-mail or by other
   /// out-of-band mechanism.
@@ -222,8 +329,7 @@ class Auth extends JsObjectWrapper<AuthJsImpl> {
   /// or the password is not valid.
   Future<User> createUserWithEmailAndPassword(String email, String password) =>
       handleThenableWithMapper(
-          jsObject.createUserWithEmailAndPassword(email, password),
-          (u) => new User.fromJsObject(u));
+          jsObject.createUserWithEmailAndPassword(email, password), User.get);
 
   /// Returns the list of provider IDs for the given [email] address,
   /// that can be used to sign in.
@@ -243,30 +349,54 @@ class Auth extends JsObjectWrapper<AuthJsImpl> {
   Future sendPasswordResetEmail(String email) =>
       handleThenable(jsObject.sendPasswordResetEmail(email));
 
+  /// Asynchronously signs in with the given credentials, and returns any
+  /// available additional user information, such as user name.
+  Future<UserCredential> signInAndRetrieveDataWithCredential(
+          AuthCredential credential) =>
+      handleThenableWithMapper(
+          jsObject.signInAndRetrieveDataWithCredential(credential),
+          (uc) => new UserCredential.fromJsObject(uc));
+
   /// Signs in as an anonymous user. If an anonymous user is already
   /// signed in, that user will be returned. In other case, new anonymous
   /// [User] identity is created and returned.
-  Future<User> signInAnonymously() => handleThenableWithMapper(
-      jsObject.signInAnonymously(), (u) => new User.fromJsObject(u));
+  Future<User> signInAnonymously() =>
+      handleThenableWithMapper(jsObject.signInAnonymously(), User.get);
 
   /// Signs in with the given [credential] and returns the [User].
   Future<User> signInWithCredential(AuthCredential credential) =>
-      handleThenableWithMapper(jsObject.signInWithCredential(credential),
-          (u) => new User.fromJsObject(u));
+      handleThenableWithMapper(
+          jsObject.signInWithCredential(credential), User.get);
 
   /// Signs in with the custom [token] and returns the [User].
   /// Custom token must be generated by an auth backend.
   /// Fails with an error if the token is invalid, expired or not accepted
   /// by Firebase Auth service.
-  Future<User> signInWithCustomToken(String token) => handleThenableWithMapper(
-      jsObject.signInWithCustomToken(token), (u) => new User.fromJsObject(u));
+  Future<User> signInWithCustomToken(String token) =>
+      handleThenableWithMapper(jsObject.signInWithCustomToken(token), User.get);
 
   /// Signs in with [email] and [password] and returns the [User].
   /// Fails with an error if the sign in is not successful.
   Future<User> signInWithEmailAndPassword(String email, String password) =>
       handleThenableWithMapper(
-          jsObject.signInWithEmailAndPassword(email, password),
-          (u) => new User.fromJsObject(u));
+          jsObject.signInWithEmailAndPassword(email, password), User.get);
+
+  /// Asynchronously signs in using a phone number in E.164 format
+  /// (e.g. +16505550101).
+  ///
+  /// This method sends a code via SMS to the given phone number, and returns
+  /// a [ConfirmationResult].
+  /// After the user provides the code sent to their phone, call
+  /// [ConfirmationResult.confirm] with the code to sign the user in.
+  ///
+  /// For abuse prevention, this method also requires a [ApplicationVerifier].
+  /// The Firebase Auth SDK includes a reCAPTCHA-based implementation, [RecaptchaVerifier].
+  Future<ConfirmationResult> signInWithPhoneNumber(
+          String phoneNumber, ApplicationVerifier applicationVerifier) =>
+      handleThenableWithMapper(
+          jsObject.signInWithPhoneNumber(
+              phoneNumber, applicationVerifier.jsObject),
+          (c) => new ConfirmationResult.fromJsObject(c));
 
   /// Signs in using a popup-based OAuth authentication flow with the
   /// given [provider].
@@ -387,7 +517,7 @@ class GithubAuthProvider extends AuthProvider<GithubAuthProviderJsImpl> {
       new GithubAuthProvider.fromJsObject(
           jsObject.setCustomParameters(jsify(customOAuthParameters)));
 
-  /// Creates a credential for Github.
+  /// Creates a credential for GitHub.
   static AuthCredential credential(String token) =>
       GithubAuthProviderJsImpl.credential(token);
 }
@@ -459,53 +589,173 @@ class TwitterAuthProvider extends AuthProvider<TwitterAuthProviderJsImpl> {
       TwitterAuthProviderJsImpl.credential(token, secret);
 }
 
-/// Event propagated in Stream controllers when an auth state changes.
-class AuthEvent {
-  /// The user.
-  final User user;
+/// Phone number auth provider.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth.PhoneAuthProvider>.
+class PhoneAuthProvider extends AuthProvider<PhoneAuthProviderJsImpl> {
+  static String get PROVIDER_ID => PhoneAuthProviderJsImpl.PROVIDER_ID;
 
-  /// Creates a new AuthEvent with user.
-  AuthEvent(this.user);
+  /// Creates a new PhoneAuthProvider with the optional [Auth] instance
+  /// in which sign-ins should occur.
+  factory PhoneAuthProvider([Auth auth]) =>
+      new PhoneAuthProvider.fromJsObject((auth != null)
+          ? new PhoneAuthProviderJsImpl(auth.jsObject)
+          : new PhoneAuthProviderJsImpl());
+
+  /// Creates a new PhoneAuthProvider from a [jsObject].
+  PhoneAuthProvider.fromJsObject(PhoneAuthProviderJsImpl jsObject)
+      : super.fromJsObject(jsObject);
+
+  /// Starts a phone number authentication flow by sending a verification code
+  /// to the given [phoneNumber] in E.164 format (e.g. +16505550101).
+  /// Returns an ID that can be passed to [PhoneAuthProvider.credential]
+  /// to identify this flow.
+  ///
+  /// For abuse prevention, this method also requires an [ApplicationVerifier].
+  Future<String> verifyPhoneNumber(
+          String phoneNumber, ApplicationVerifier applicationVerifier) =>
+      handleThenable(jsObject.verifyPhoneNumber(
+          phoneNumber, applicationVerifier.jsObject));
+
+  /// Creates a phone auth credential given the verification ID
+  /// from [verifyPhoneNumber] and the [verificationCode] that was sent to the
+  /// user's mobile device.
+  static AuthCredential credential(
+          String verificationId, String verificationCode) =>
+      PhoneAuthProviderJsImpl.credential(verificationId, verificationCode);
 }
 
-/// A structure containing [User] and [AuthCredential].
+/// A verifier for domain verification and abuse prevention.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth.ApplicationVerifier>
+abstract class ApplicationVerifier<T extends ApplicationVerifierJsImpl>
+    extends JsObjectWrapper<T> {
+  /// Returns the type of application verifier (e.g. "recaptcha").
+  String get type => jsObject.type;
+
+  /// Creates a new ApplicationVerifier from a [jsObject].
+  ApplicationVerifier.fromJsObject(T jsObject) : super.fromJsObject(jsObject);
+
+  /// Executes the verification process.
+  /// Returns a Future containing string for a token that can be used to
+  /// assert the validity of a request.
+  Future<String> verify() => handleThenable(jsObject.verify());
+}
+
+/// reCAPTCHA verifier.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth.RecaptchaVerifier>
+/// See: <https://www.google.com/recaptcha/>
+class RecaptchaVerifier extends ApplicationVerifier<RecaptchaVerifierJsImpl> {
+  /// Creates a new RecaptchaVerifier from [container], [parameters] and [app].
+  ///
+  /// The [container] has different meaning depending on whether the reCAPTCHA
+  /// is hidden or visible. For a visible reCAPTCHA it must be empty.
+  /// If a string is used, it has to correspond to an element ID.
+  /// The corresponding element must also must be in the DOM at the time
+  /// of initialization.
+  ///
+  /// The [parameters] are optional [Map] of Recaptcha parameters.
+  /// See: <https://developers.google.com/recaptcha/docs/display#render_param>.
+  /// All parameters are accepted except for the sitekey.
+  /// Firebase Auth backend provisions a reCAPTCHA for each project
+  /// and will configure this upon rendering.
+  /// For an invisible reCAPTCHA, a size key must have the value 'invisible'.
+  ///
+  /// The [app] is the corresponding Firebase app.
+  /// If none is provided, the default Firebase App instance is used.
+  ///
+  ///     verifier = new fb.RecaptchaVerifier("register", {
+  ///       "size": "invisible",
+  ///       "callback": (resp) {
+  ///         print("Successful reCAPTCHA response");
+  ///       },
+  ///       "expired-callback": () {
+  ///         print("Response expired");
+  ///       }
+  ///     });
+  factory RecaptchaVerifier(container,
+          [Map<String, dynamic> parameters, App app]) =>
+      (parameters != null)
+          ? ((app != null)
+              ? new RecaptchaVerifier.fromJsObject(new RecaptchaVerifierJsImpl(
+                  container, jsify(parameters), app.jsObject))
+              : new RecaptchaVerifier.fromJsObject(
+                  new RecaptchaVerifierJsImpl(container, jsify(parameters))))
+          : new RecaptchaVerifier.fromJsObject(
+              new RecaptchaVerifierJsImpl(container));
+
+  /// Creates a new RecaptchaVerifier from a [jsObject].
+  RecaptchaVerifier.fromJsObject(RecaptchaVerifierJsImpl jsObject)
+      : super.fromJsObject(jsObject);
+
+  /// Clears the reCAPTCHA widget from the page and destroys the current instance.
+  clear() => jsObject.clear();
+
+  /// Renders the reCAPTCHA widget on the page.
+  /// Returns a Future that resolves with the reCAPTCHA widget ID.
+  Future<num> render() => handleThenable(jsObject.render());
+}
+
+/// A result from a phone number sign-in, link, or reauthenticate call.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth.ConfirmationResult>
+class ConfirmationResult extends JsObjectWrapper<ConfirmationResultJsImpl> {
+  /// Returns the phone number authentication operation's verification ID.
+  /// This can be used along with the verification code to initialize a phone
+  /// auth credential.
+  String get verificationId => jsObject.verificationId;
+
+  /// Creates a new ConfirmationResult from a [jsObject].
+  ConfirmationResult.fromJsObject(ConfirmationResultJsImpl jsObject)
+      : super.fromJsObject(jsObject);
+
+  /// Finishes a phone number sign-in, link, or reauthentication, given
+  /// the code that was sent to the user's mobile device.
+  Future<UserCredential> confirm(String verificationCode) =>
+      handleThenableWithMapper(jsObject.confirm(verificationCode),
+          (u) => new UserCredential.fromJsObject(u));
+}
+
+/// A structure containing a [User], an [AuthCredential] and [operationType].
+/// operationType could be 'signIn' for a sign-in operation, 'link' for a
+/// linking operation and 'reauthenticate' for a reauthentication operation.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth#.UserCredential>
 class UserCredential extends JsObjectWrapper<UserCredentialJsImpl> {
-  User _user;
-
   /// Returns the user.
-  User get user {
-    if (jsObject.user != null) {
-      if (_user != null) {
-        _user.jsObject = jsObject.user;
-      } else {
-        _user = new User.fromJsObject(jsObject.user);
-      }
-    } else {
-      _user = null;
-    }
-    return _user;
-  }
-
-  /// Sets the user to [u].
-  void set user(User u) {
-    _user = u;
-    jsObject.user = u.jsObject;
-  }
+  User get user => User.get(jsObject.user);
 
   /// Returns the auth credential.
   AuthCredential get credential => jsObject.credential;
 
-  /// Sets the auth credential to [c].
-  void set credential(AuthCredential c) {
-    jsObject.credential = c;
-  }
+  /// Returns the operation type.
+  String get operationType => jsObject.operationType;
 
-  /// Creates a new UserCredential with optional [user] and [credential].
-  factory UserCredential({User user, AuthCredential credential}) =>
-      new UserCredential.fromJsObject(new UserCredentialJsImpl(
-          user: user.jsObject, credential: credential));
+  /// Returns additional user information from a federated identity provider.
+  AdditionalUserInfo get additionalUserInfo =>
+      new AdditionalUserInfo.fromJsObject(jsObject.additionalUserInfo);
 
   /// Creates a new UserCredential from a [jsObject].
   UserCredential.fromJsObject(UserCredentialJsImpl jsObject)
+      : super.fromJsObject(jsObject);
+}
+
+/// A structure containing additional user information from
+/// a federated identity provider.
+///
+/// See: <https://firebase.google.com/docs/reference/js/firebase.auth#.AdditionalUserInfo>
+class AdditionalUserInfo extends JsObjectWrapper<AdditionalUserInfoJsImpl> {
+  /// Returns the provider id.
+  String get providerId => jsObject.providerId;
+
+  /// Returns the profile.
+  Map<String, dynamic> get profile => dartify(jsObject.profile);
+
+  /// Returns the user name.
+  String get username => jsObject.username;
+
+  /// Creates a new AdditionalUserInfo from a [jsObject].
+  AdditionalUserInfo.fromJsObject(AdditionalUserInfoJsImpl jsObject)
       : super.fromJsObject(jsObject);
 }
