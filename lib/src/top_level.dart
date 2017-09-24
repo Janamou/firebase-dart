@@ -4,7 +4,7 @@ import 'app.dart';
 import 'auth.dart';
 import 'database.dart';
 import 'interop/firebase_interop.dart' as firebase;
-import 'package:firebase/src/messaging.dart';
+import 'messaging.dart';
 import 'storage.dart';
 
 export 'interop/firebase_interop.dart' show SDK_VERSION;
