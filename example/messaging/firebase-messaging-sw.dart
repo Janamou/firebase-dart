@@ -2,8 +2,10 @@ import 'package:firebase/firebase.dart' as fb;
 import 'package:service_worker/worker.dart';
 
 void main(List<String> args) {
-  fb.workerSelf.importScripts('https://www.gstatic.com/firebasejs/3.8.0/firebase-app.js');
-  fb.workerSelf.importScripts('https://www.gstatic.com/firebasejs/3.8.0/firebase-messaging.js');
+  fb.workerSelf.importScripts(
+      'https://www.gstatic.com/firebasejs/3.8.0/firebase-app.js');
+  fb.workerSelf.importScripts(
+      'https://www.gstatic.com/firebasejs/3.8.0/firebase-messaging.js');
 
   fb.initializeApp(messagingSenderId: "782861952658");
 
