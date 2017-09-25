@@ -28,7 +28,9 @@ class AuthApp {
   final AnchorElement logout;
   final TableElement authInfo;
   final ParagraphElement error;
+  final SelectElement persistenceState, verifyEmailLanguage;
   final ButtonElement verifyEmail;
+  final DivElement registeredUser, verifyEmailContainer;
 
   AuthApp()
       : this.auth = fb.auth(),
@@ -38,7 +40,11 @@ class AuthApp {
         this.error = querySelector("#register_form p"),
         this.logout = querySelector("#logout_btn"),
         this.registerForm = querySelector("#register_form"),
-        this.verifyEmail = querySelector('#verify_email') {
+        this.persistenceState = querySelector("#persistent_state"),
+        this.verifyEmail = querySelector('#verify_email'),
+        this.verifyEmailLanguage = querySelector('#verify_email_language'),
+        this.registeredUser = querySelector("#registered_user"),
+        this.verifyEmailContainer = querySelector("#verify_email_container") {
     logout.onClick.listen((e) {
       e.preventDefault();
       auth.signOut();
@@ -62,8 +68,20 @@ class AuthApp {
     verifyEmail.onClick.listen((e) async {
       verifyEmail.disabled = true;
       verifyEmail.text = 'Sending verification email...';
-      await auth.currentUser.sendEmailVerification();
-      verifyEmail.text = 'Verification email sent!';
+      try {
+        // you will get the verification email in selected language
+        auth.languageCode = _getSelectedValue(verifyEmailLanguage);
+        // url should be any authorized domain in your console - we use here,
+        // for this example, authDomain because it is whitelisted by default
+        // More info: https://firebase.google.com/docs/auth/web/passing-state-in-email-actions
+        await auth.currentUser.sendEmailVerification(
+            new fb.ActionCodeSettings(url: "https://$authDomain"));
+        verifyEmail.text = 'Verification email sent!';
+      } catch (e) {
+        verifyEmail
+          ..text = e.toString()
+          ..style.color = 'red';
+      }
     });
   }
 
@@ -71,6 +89,9 @@ class AuthApp {
     if (email.isNotEmpty && password.isNotEmpty) {
       var trySignin = false;
       try {
+        // Modifies persistence state. More info: https://firebase.google.com/docs/auth/web/auth-state-persistence
+        var selectedPersistence = _getSelectedValue(persistenceState);
+        await auth.setPersistence(selectedPersistence);
         await auth.createUserWithEmailAndPassword(email, password);
       } on fb.FirebaseError catch (e) {
         if (e.code == "auth/email-already-in-use") {
@@ -92,14 +113,16 @@ class AuthApp {
     }
   }
 
+  String _getSelectedValue(SelectElement element) =>
+      element.options[element.selectedIndex].value;
+
   void _setLayout(fb.User user) {
     if (user != null) {
       registerForm.style.display = "none";
-      logout.style.display = "block";
+      registeredUser.style.display = "block";
       email.value = "";
       password.value = "";
       error.text = "";
-      authInfo.style.display = "block";
 
       var data = <String, dynamic>{
         'email': user.email,
@@ -121,12 +144,12 @@ class AuthApp {
       print('User.toJson:');
       print(const JsonEncoder.withIndent(' ').convert(user));
 
-      verifyEmail.style.display = user.emailVerified ? 'none' : 'block';
+      verifyEmailContainer.style.display =
+          user.emailVerified ? "none" : "block";
     } else {
       registerForm.style.display = "block";
-      authInfo.style.display = "none";
-      logout.style.display = "none";
-      verifyEmail.style.display = "none";
+      registeredUser.style.display = "none";
+
       authInfo.children.clear();
     }
   }
