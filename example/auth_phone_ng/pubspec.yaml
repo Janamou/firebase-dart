@@ -1,16 +1,15 @@
-name: firebase_phone_auth_example
-description: Firebase Phone Auth example using Angular
-version: 0.0.1
+name: firebase.auth_phone_ng
+description: Phone auth sample using AngularDart
+version: 1.0.0
+authors:
+- Jana Moudra <jana.moudra@gmail.com>
+- Kevin Moore <kevmoo@google.com>
+homepage: https://github.com/firebase/firebase-dart
 environment:
-  sdk: '>=1.24.0 <2.0.0'
+  sdk: '>=1.21.0 <2.0.0'
 dependencies:
-  angular: '^4.0.0-alpha+2'
-  firebase: '^4.0.0'
-dev_dependencies:
-  browser: '^0.10.0'
-  dart_to_js_script_rewriter: '^1.0.1'
+  angular: '^4.0.0'
 transformers:
-- angular:
-    entry_points:
-    - web/main.dart
-- dart_to_js_script_rewriter
+  - angular:
+      entry_points:
+          - web/main.dart

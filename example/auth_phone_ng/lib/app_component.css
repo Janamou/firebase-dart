@@ -1,0 +1,10 @@
+.error {
+    color: red;
+}
+#auth_info td {
+    padding: 1px;
+}
+#auth_info td.header {
+    font-weight: bold;
+    text-align: right;
+}
