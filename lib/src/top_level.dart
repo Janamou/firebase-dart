@@ -72,7 +72,7 @@ Auth auth([App app]) {
   return Auth.get(jsObject);
 }
 
-/// Accesses the [Database] service for the default App or a given app.
+/// Accesses the [Database] service for the default App or a given App.
 ///
 /// The database is also a namespace that can be used to access
 /// global constants and methods associated with the database service.
@@ -85,9 +85,9 @@ Database database([App app]) {
   return Database.get(jsObject);
 }
 
-/// Gets the Messaging service for the default app or a given app.
+/// Gets the [Messaging] service for the default App or a given App.
 ///
-/// Calling firebase.messaging() in a service worker results in Firebase
+/// Calling [messaging()] in a service worker results in Firebase
 /// generating notifications if the push message payload has a notification
 /// parameter.
 ///
